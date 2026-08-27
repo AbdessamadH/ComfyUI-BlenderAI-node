@@ -1,66 +1,64 @@
-# Skill « Lecture critique du règlement de concours »
+# Skill « Esquisse scannée → DXF (AutoCAD) »
 
 ## Objectif
-Abdessamad est architecte freelance au Maroc. Il participe à des concours d'architecture (majoritairement des opérations immobilières d'habitat), publiés et téléchargés via marchespublics.gov.ma. Chaque dossier de concours contient un règlement et des pièces annexes (programme, CCAP, etc.), souvent en Word ou en PDF scanné, parfois volumineux et mal structurés.
-
-Ce premier skill (le 1er d'une série prévue pour outiller son workflow de concours) lit ces pièces et produit une synthèse structurée en français qui lui permet de démarrer sa conception (qu'il réalise lui-même) sans avoir à dépouiller manuellement chaque document. C'est la version la plus simple qui a déjà de la valeur : elle ne couvre que la lecture/synthèse du règlement, pas les autres étapes du workflow (esquisse, DXF, 3D, métré, plaquette — prévues comme skills séparés, un par un, dans de futurs cycles `/spec` → `/build`).
+Deuxième skill de la série d'outillage du workflow de concours d'architecture d'Abdessamad. Il convertit une esquisse manuscrite (plan, coupe, ou façade), dessinée à la main à une échelle conventionnelle (1/1000 à 1/100) sur papier A3/A4/A5 puis scannée, en un fichier DXF exploitable directement dans AutoCAD. Il est appelé de façon répétée au fil des itérations de conception (l'architecte redessine, rescanne, reconvertit) jusqu'à ce que la conception réponde aux exigences du règlement de concours — cette satisfaction est jugée par l'architecte lui-même, pas par le skill. Le DXF produit sert aussi d'entrée au skill #4 (élaboration 3D via Blender), prévu plus tard.
 
 ## Portée
 
 ### Dans le périmètre
-- Un skill Claude Code (`SKILL.md`) qui lit **un fichier à la fois** (Word ou PDF, éventuellement scanné) fourni par l'utilisateur.
-- Extraction et synthèse en français des 9 rubriques listées ci-dessous.
-- Génération/mise à jour d'un document Word (.docx) de synthèse, avec paragraphes et tableaux selon la nature du contenu.
-- Comportement cumulatif : chaque nouvelle pièce complète ou corrige un document de synthèse existant pour le même concours (pas un document par pièce).
-- Le skill est livré dans un nouveau repo GitHub privé dédié : **`architecte-workflow-skills`**.
+- Conversion d'**un dessin à la fois** (un plan, une coupe, ou une façade) — pas un lot de plusieurs pages en une passe.
+- Prise en charge des 3 types de dessins (plan, coupe, façade), chacun avec ses conventions propres.
+- Lecture de cotes, nomenclature des espaces, et notations d'angle explicites portées à la main sur l'esquisse.
+- Nettoyage/redressement automatique de la géométrie (murs alignés, angles à 90° par défaut).
+- Sortie en fichier DXF structuré par calques selon les conventions de trait de l'utilisateur.
 
-### Hors périmètre (pour ce spec)
-- Les 5 autres skills mentionnés (sketch → DXF, benchmark, 3D via Blender MCP, métré, mise en page plaquette A3 sur Canva) — chacun fera l'objet d'un spec et d'un build séparés, plus tard.
-- Les idées de skills additionnels évoquées (veille concours, notice architecturale, rétroplanning/checklist, vérification réglementaire, archivage structuré) — non spécifiées ni construites ici.
-- Traitement de documents en arabe uniquement (n'arrive jamais dans le workflow de l'utilisateur).
-- Traitement automatique de tout un dossier de concours en une fois (l'utilisateur fournit les pièces une à une, volontairement, car elles ne sont pas toutes disponibles en même temps et varient d'un marché à l'autre).
-- Création automatique de l'arborescence de dossiers par concours — l'utilisateur crée et nomme lui-même le dossier de chaque concours ; le skill lit/écrit dans le chemin qu'on lui donne.
+### Hors périmètre
+- Jugement de la qualité architecturale ou vérification de conformité réglementaire (rôle de l'architecte, et en amont du skill #1).
+- Traitement de plusieurs dessins en une seule invocation.
+- Les autres skills de la série (benchmark, 3D, métré, plaquette A3).
+- Support de conventions de dessin autres que celles décrites ici (si l'utilisateur change de convention plus tard, ce spec devra être révisé).
 
 ## Besoins exacts
 
-**Entrée** : un seul fichier par exécution, Word (.docx/.doc) ou PDF (texte ou scanné), plus le chemin du dossier du concours concerné (créé au préalable par l'utilisateur). Les documents sont toujours en français ; certaines pièces existent en double français/arabe avec le même contenu — le skill se base uniquement sur la version française et ignore la version arabe.
+**Entrée** : une image scannée (PDF ou image) d'un seul dessin architectural à main levée, dessiné à une échelle conventionnelle (1/1000, 1/500, 1/200, ou 1/100) sur papier A3, A4 ou A5. L'utilisateur précise à l'invocation : le type de dessin (plan / coupe / façade), l'échelle, le dossier du concours où enregistrer le résultat, et le nom du fichier de sortie.
 
-**Traitement** :
-- Si le PDF est scanné (pas de texte sélectionnable), passer par de l'OCR pour extraire le texte.
-- Identifier et extraire les informations relatives aux 9 rubriques suivantes :
-  1. Nature et objet du concours
-  2. Programme physique (typologie des logements, surfaces, nombre d'unités, répartition) — en tableau
-  3. Format et contenu exact du rendu attendu (nombre de planches, format papier, échelles, pièces graphiques et écrites demandées, format numérique de dépôt)
-  4. Critères de jugement du jury / grille d'évaluation si mentionnée
-  5. Calendrier (dates limites de remise, visite de site, questions-réponses) — en tableau
-  6. Pièces administratives à fournir (hors production architecturale)
-  7. Budget/enveloppe financière si mentionnée
-  8. Contraintes du terrain issues du règlement (servitudes, COS/CUS, prospects, si précisés dans le texte)
-  9. Points d'ambiguïté ou d'attention identifiés par le skill (passages flous, contradictoires, ou illisibles)
-- Utiliser des tableaux pour les rubriques à données structurées (programme physique, calendrier ; tableau libre pour toute autre rubrique s'y prêtant), des paragraphes pour les rubriques narratives.
+**Conventions de trait à reconnaître** (constantes pour tous les dessins) :
+- Trait fort → murs (structure).
+- Trait moyen → menuiserie (portes, fenêtres).
+- Trait fin → aménagement vu (meubles, murs bas, carrelage...).
+- Trait interrompu (tirets) → éléments cachés (au-dessus du plan de coupe).
+- Pour les façades : épaisseur de trait dégressive du plus proche (épais) au plus loin (fin), pour indiquer la profondeur.
 
-**Sortie** : un fichier `.docx` de synthèse dans le dossier du concours fourni par l'utilisateur.
-- S'il n'existe pas encore pour ce concours, le skill le crée.
-- S'il existe déjà, le skill le met à jour rubrique par rubrique avec les informations de la nouvelle pièce, sans écraser les rubriques non concernées par cette pièce.
-- En cas de contradiction entre une information déjà présente et une information de la nouvelle pièce, **la nouvelle pièce prime** et remplace l'ancienne valeur (comportement voulu : les pièces ultérieures rectifient/complètent le marché initial).
+**Épaisseurs de murs par défaut** (murs toujours dessinés en double ligne, à l'échelle, sur l'esquisse) :
+- Cloisons intérieures : 10 cm.
+- Murs extérieurs : 35 cm.
+- Murs mitoyens : 25 cm.
+- Une cotation explicite sur l'esquisse prime sur ces valeurs par défaut.
+
+**Portes et fenêtres** :
+- Portes : dessinées avec l'ouvrant et le sens d'ouverture ; hauteur par défaut 2,20 m (sauf cotation contraire indiquée par l'utilisateur).
+- Fenêtres : deux traits rapprochés de 1 mm sur l'esquisse → représentés à 0,7 mm dans le DXF ; pour les fenêtres coulissantes, des flèches indiquent le sens d'ouverture ; allège/linteau notés selon la convention 1/1.2 (étages) ou 1.2/1 (RDC), sauf indication contraire sur l'esquisse.
+- Portes-fenêtres : notées « PF » sur l'esquisse, à reconnaître comme telles.
+
+**Calage dimensionnel** : déduit de l'échelle indiquée par l'utilisateur et du format papier (A3/A4/A5). Les cotes explicitement écrites sur l'esquisse priment sur ce calcul par échelle quand les deux sont présentes et divergent (voir cas limites pour la gestion d'un écart significatif).
+
+**Nettoyage géométrique** : le skill redresse et nettoie la géométrie automatiquement (aligne les murs, force les angles à 90° par défaut) — sauf si l'esquisse porte une cotation d'angle explicite en degrés indiquant un angle volontairement différent de 90°, auquel cas cet angle est respecté tel quel.
+
+**Sortie** : un fichier DXF dans le sous-dossier `dxf/` du dossier du concours indiqué, nommé par l'utilisateur (ex. `plan-rdc.dxf`, `coupe-aa.dxf`, `facade-nord.dxf`). Le DXF utilise des calques correspondant aux catégories de trait ci-dessus (murs, menuiserie, aménagement, éléments cachés ; pour les façades, calques par plan de profondeur), en respectant les épaisseurs de mur et de trait données. Les nomenclatures d'espaces (nom, et surface si indiquée) sont reportées en tant qu'entités TEXTE dans le DXF.
 
 ## Cas limites
-- Passage illisible dans un PDF scanné (mauvaise qualité d'OCR) → signaler explicitement dans la rubrique concernée (« passage illisible à vérifier manuellement », avec localisation si possible) plutôt que deviner ou ignorer silencieusement.
-- Information absente de la pièce fournie pour une rubrique donnée → laisser la rubrique en l'état (« non spécifié à ce stade ») jusqu'à ce qu'une autre pièce la renseigne ; ne pas inventer de valeur.
-- Nouvelle pièce contredisant une info déjà présente → la nouvelle pièce remplace l'ancienne (voir Besoins exacts).
-- Fichier fourni non pertinent, vide, ou pas un document de concours reconnaissable → signaler clairement à l'utilisateur plutôt que de produire une synthèse vide ou erronée.
-- Premier fichier fourni pour un concours (document de synthèse pas encore créé) → le skill crée le document dans le dossier du concours indiqué.
-- Document bilingue français/arabe à contenu dupliqué → traiter uniquement la partie française.
+- Élément de l'esquisse ambigu ou illisible (catégorie de trait pas claire, cote illisible, symbole de porte/fenêtre pas clair) → signaler explicitement dans le résultat plutôt que deviner et produire un DXF silencieusement faux.
+- Cote écrite sur l'esquisse en désaccord significatif avec la valeur déduite de l'échelle/format papier → la cote explicite prime, mais l'écart est signalé pour que l'architecte le vérifie, plutôt que d'être résolu silencieusement.
+- Angle qui semble volontairement différent de 90° sur le dessin mais sans annotation en degrés → traité comme 90° par défaut (règle de redressement), avec un signalement que l'intention pourrait être différente, pour que l'architecte ajoute la cotation d'angle si besoin.
+- Épaisseur de mur non standard sans cotation explicite → utiliser les valeurs par défaut (10/35/25 cm) et signaler l'hypothèse faite.
 
 ## Contraintes non-fonctionnelles
-- Le skill vit dans un nouveau repo GitHub privé dédié : `architecte-workflow-skills` (à créer).
-- Une marge d'erreur mineure est tolérée : une information manquante doit être signalée comme telle plutôt que d'être fausse ou inventée. Pas d'exigence de fidélité à 100 % pour valider le skill.
-- S'appuie sur les capacités existantes de génération/édition Word (paragraphes + tableaux) plutôt que de réinventer un générateur de documents.
+- Le DXF doit être ouvrable et exploitable directement dans AutoCAD, sans retouche de structure de fichier nécessaire avant ouverture.
+- Vit dans le repo `architecte-workflow-skills`, comme un nouveau skill à côté de `lecture-reglement-concours`.
 
 ## Définition de « terminé »
-- [ ] Le repo GitHub privé `architecte-workflow-skills` existe, avec le skill livré dedans (structure Claude Code skill standard).
-- [ ] Le skill traite un fichier Word ou PDF (y compris scanné, avec OCR) fourni un par un et produit/actualise un `.docx` de synthèse dans le dossier du concours indiqué.
-- [ ] Les 9 rubriques définies sont présentes dans le document de synthèse, avec tableaux pour le programme physique et le calendrier, paragraphes pour le reste.
-- [ ] Testé par l'utilisateur avec les pièces d'un vrai marché réel mais dépassé (fourni par lui) : le document produit couvre les 9 rubriques avec une marge d'erreur mineure acceptée (infos manquantes signalées, pas inventées).
-- [ ] Le comportement cumulatif est vérifié : une deuxième pièce complète/corrige le document existant sans écraser les rubriques non concernées, et une contradiction est bien résolue en faveur de la pièce la plus récente.
-- [ ] Un passage illisible (mauvais OCR) est signalé dans le document plutôt que deviné ou passé sous silence.
+- [ ] Le skill est livré dans `architecte-workflow-skills` (structure Claude Code skill standard).
+- [ ] Testé par l'utilisateur avec une vraie esquisse scannée qu'il fournira (plan, coupe, ou façade).
+- [ ] Le DXF produit respecte les calques et épaisseurs de trait convenus, s'ouvre correctement, et la géométrie est redressée/nettoyée (angles à 90° sauf cotation explicite contraire).
+- [ ] Les ambiguïtés/illisibilités et écarts de cotation sont signalés plutôt que devinés silencieusement.
+- [ ] Le fichier est enregistré dans `dxf/` du dossier du concours indiqué, avec le nom donné par l'utilisateur.
