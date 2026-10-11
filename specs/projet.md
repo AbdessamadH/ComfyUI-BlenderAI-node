@@ -6,15 +6,17 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 ## Portée
 
 ### Dans le périmètre
-- Conversion d'**un dessin à la fois** (un plan, une coupe, ou une façade) — pas un lot de plusieurs pages en une passe.
+- Conversion d'**une esquisse à la fois** (un fichier/une feuille source), de type plan, coupe, ou façade.
+- Si cette feuille contient **plusieurs niveaux du même bâtiment** (RDC, R+1, R+2...) — pratique courante de l'utilisateur, qui ne les sépare jamais par calque — ils sont **tous traités ensemble dans la même invocation et le même DXF de sortie**, chacun identifié uniquement par son titre texte (pas de calque par niveau), positionnés côte à côte **dans la même disposition relative que sur l'esquisse d'origine**.
 - Prise en charge des 3 types de dessins (plan, coupe, façade), chacun avec ses conventions propres.
 - Lecture de cotes, nomenclature des espaces, et notations d'angle explicites portées à la main sur l'esquisse.
 - Nettoyage/redressement automatique de la géométrie (murs alignés, angles à 90° par défaut).
-- Sortie en fichier DXF structuré par calques selon les conventions de trait de l'utilisateur.
+- Sortie en fichier DXF structuré par calques selon les conventions de trait de l'utilisateur (calques par type d'élément — murs/menuiserie/aménagement/caché — jamais par niveau).
+- Auto-vérification de complétude et rendu visuel de contrôle avant de livrer le DXF (voir Contraintes non-fonctionnelles).
 
 ### Hors périmètre
 - Jugement de la qualité architecturale ou vérification de conformité réglementaire (rôle de l'architecte, et en amont du skill #1).
-- Traitement de plusieurs dessins en une seule invocation.
+- Traitement de **plusieurs esquisses distinctes** (fichiers séparés, ou projets différents) en une seule invocation — ça reste un fichier à la fois ; seule la présence de plusieurs niveaux d'un même bâtiment *dans une même feuille* est prise en charge nativement (voir ci-dessus).
 - Les autres skills de la série (benchmark, 3D, métré, plaquette A3).
 - Support de conventions de dessin autres que celles décrites ici (si l'utilisateur change de convention plus tard, ce spec devra être révisé).
 
@@ -47,6 +49,7 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 **Sortie** : un fichier DXF dans le sous-dossier `dxf/` du dossier du concours indiqué, nommé par l'utilisateur (ex. `plan-rdc.dxf`, `coupe-aa.dxf`, `facade-nord.dxf`). Le DXF utilise des calques correspondant aux catégories de trait ci-dessus (murs, menuiserie, aménagement, éléments cachés ; pour les façades, calques par plan de profondeur), en respectant les épaisseurs de mur et de trait données. Les nomenclatures d'espaces (nom, et surface si indiquée) sont reportées en tant qu'entités TEXTE dans le DXF.
 
 ## Cas limites
+- Esquisse multi-niveaux (RDC/R+1/R+2...) où un niveau n'a pas de titre clair, ou où les niveaux se chevauchent visuellement au point de ne pas pouvoir les séparer → signaler plutôt que deviner à quel niveau appartient un élément.
 - Élément de l'esquisse ambigu ou illisible (catégorie de trait pas claire, cote illisible, symbole de porte/fenêtre pas clair) → signaler explicitement dans le résultat plutôt que deviner et produire un DXF silencieusement faux.
 - Cote écrite sur l'esquisse en désaccord significatif avec la valeur déduite de l'échelle/format papier → la cote explicite prime, mais l'écart est signalé pour que l'architecte le vérifie, plutôt que d'être résolu silencieusement.
 - Angle qui semble volontairement différent de 90° sur le dessin mais sans annotation en degrés → traité comme 90° par défaut (règle de redressement), avec un signalement que l'intention pourrait être différente, pour que l'architecte ajoute la cotation d'angle si besoin.
@@ -54,6 +57,10 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 
 ## Contraintes non-fonctionnelles
 - Le DXF doit être ouvrable et exploitable directement dans AutoCAD, sans retouche de structure de fichier nécessaire avant ouverture.
+- Les murs sont toujours représentés **pochés** (remplissage plein entre les deux lignes), quelle que soit leur épaisseur — une double ligne non remplie n'est pas assez lisible à l'échelle d'un plan complet.
+- Le skill part d'un **gabarit DXF réutilisable** (calques et style de cote pré-configurés avec la bonne échelle d'affichage) plutôt que de redéfinir ces conventions à chaque génération.
+- **Avant de livrer un DXF**, le skill vérifie que chaque catégorie attendue (murs extérieurs, murs intérieurs, portes, fenêtres, aménagement, cotes) contient bien au moins une entité générée, et signale explicitement toute catégorie vide plutôt que de livrer un résultat silencieusement incomplet.
+- **Avant de livrer un DXF**, le skill en génère un rendu visuel (image) et le compare visuellement à l'esquisse source, plutôt que de considérer la génération terminée dès que le fichier s'écrit sans erreur.
 - Vit dans le repo `architecte-workflow-skills`, comme un nouveau skill à côté de `lecture-reglement-concours`.
 
 ## Définition de « terminé »
