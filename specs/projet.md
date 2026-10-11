@@ -10,7 +10,8 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 - Si cette feuille contient **plusieurs niveaux du même bâtiment** (RDC, R+1, R+2...) — pratique courante de l'utilisateur, qui ne les sépare jamais par calque — ils sont **tous traités ensemble dans la même invocation et le même DXF de sortie**, chacun identifié uniquement par son titre texte (pas de calque par niveau), positionnés côte à côte **dans la même disposition relative que sur l'esquisse d'origine**.
 - Prise en charge des 3 types de dessins (plan, coupe, façade), chacun avec ses conventions propres.
 - Lecture de cotes, nomenclature des espaces, et notations d'angle explicites portées à la main sur l'esquisse.
-- Nettoyage/redressement automatique de la géométrie (murs alignés, angles à 90° par défaut).
+- Nettoyage/redressement automatique de la géométrie (murs alignés, angles à 90° par défaut ; biais et courbes francs conservés — voir Nettoyage géométrique).
+- Entraînement sur des **photos ou captures de plans existants** (plans tiers, éventuellement rendus en couleur, sans cotes) fournis par l'utilisateur, en plus de ses propres esquisses.
 - Sortie en fichier DXF structuré par calques selon les conventions de trait de l'utilisateur (calques par type d'élément — murs/menuiserie/aménagement/caché — jamais par niveau).
 - Auto-vérification de complétude et rendu visuel de contrôle avant de livrer le DXF (voir Contraintes non-fonctionnelles).
 
@@ -22,7 +23,7 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 
 ## Besoins exacts
 
-**Entrée** : une image scannée (PDF ou image) d'un seul dessin architectural à main levée, dessiné à une échelle conventionnelle (1/1000, 1/500, 1/200, ou 1/100) sur papier A3, A4 ou A5. L'utilisateur précise à l'invocation : le type de dessin (plan / coupe / façade), l'échelle, le dossier du concours où enregistrer le résultat, et le nom du fichier de sortie.
+**Entrée** : une image scannée (PDF ou image) d'un seul dessin architectural à main levée, dessiné à une échelle conventionnelle (1/1000, 1/500, 1/200, ou 1/100) sur papier A3, A4 ou A5 — ou, pour l'entraînement, la photo/capture d'un plan existant. L'utilisateur précise à l'invocation : le type de dessin (plan / coupe / façade), l'échelle (si connue), le dossier du concours où enregistrer le résultat, et le nom du fichier de sortie.
 
 **Conventions de trait à reconnaître** (constantes pour tous les dessins) :
 - Trait fort → murs (structure).
@@ -42,15 +43,16 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 - Fenêtres : deux traits rapprochés de 1 mm sur l'esquisse → représentés à 0,7 mm dans le DXF ; pour les fenêtres coulissantes, des flèches indiquent le sens d'ouverture ; allège/linteau notés selon la convention 1/1.2 (étages) ou 1.2/1 (RDC), sauf indication contraire sur l'esquisse.
 - Portes-fenêtres : notées « PF » sur l'esquisse, à reconnaître comme telles.
 
-**Méthode de lecture** (leçon du test « plan majlis ») : l'esquisse est lue **zone par zone, zoomée avec une grille de coordonnées**, jamais d'un seul coup d'œil global. Les murs (hachurés/pochés) et les fenêtres (traits ou couleurs) sont d'abord **extraits automatiquement par analyse d'image** pour obtenir leurs positions ; la lecture visuelle sert à interpréter (portes, sens d'ouverture, usage des pièces) et à écarter les faux positifs (textes colorés, mobilier, filigranes). Un **inventaire** (nombre de pièces, portes, fenêtres relevés sur l'esquisse) est établi avant de générer quoi que ce soit.
+**Méthode de lecture** (leçon du test « plan majlis ») : l'esquisse est lue **zone par zone, zoomée avec une grille de coordonnées**, jamais d'un seul coup d'œil global. Les murs (hachurés/pochés) et les fenêtres (traits ou couleurs) sont d'abord **extraits automatiquement par analyse d'image** pour obtenir leurs positions ; la lecture visuelle sert à interpréter (portes, sens d'ouverture, usage des pièces) et à écarter les faux positifs (textes colorés, mobilier, filigranes). Un **inventaire** (nombre de pièces, portes, fenêtres relevés sur l'esquisse ; sièges, sanitaires et mobilier quand il y en a) est établi avant de générer quoi que ce soit. Leçons du test « auditorium » : les traits très clairs (portes, projections en gris pâle) sont recherchés par **plusieurs passes de seuil** ; les morceaux colinéaires interrompus sont **recousus** (trait continu si couverture ≥ 82 %, sinon pointillé → calque caché) ; les éléments répétitifs (sièges en rangées, WC, lavabos, chaises) sont **comptés par rangée** puis redessinés en blocs, au lieu d'être recopiés trait par trait.
 
-**Calage dimensionnel** : quand des cotes sont écrites sur l'esquisse, l'échelle est calée **par recoupement de plusieurs cotes** (et non une seule), puis la géométrie est **reconstruite à partir des cotes** (les pixels ne servent qu'à la topologie et au contrôle). Sinon, échelle indiquée par l'utilisateur + format papier (A3/A4/A5). Les cotes explicites priment sur le calcul par échelle quand les deux divergent (voir cas limites).
+**Calage dimensionnel** : quand des cotes sont écrites sur l'esquisse, l'échelle est calée **par recoupement de plusieurs cotes** (et non une seule), puis la géométrie est **reconstruite à partir des cotes** (les pixels ne servent qu'à la topologie et au contrôle). Sinon, échelle indiquée par l'utilisateur + format papier (A3/A4/A5). **Sans cote ni échelle** (plans tiers) : calage sur des éléments normalisés recoupés entre eux (pas des rangées de sièges 1,00 m, portes 0,90 m, cabines WC ≈ 1,00 m), l'incertitude (de l'ordre de ±5 %) étant affichée dans le DXF et le compte rendu. Les cotes explicites priment sur le calcul par échelle quand les deux divergent (voir cas limites).
 
 **Épaisseur des murs** (règle proposée, à valider par l'utilisateur) : épaisseur cotée > épaisseur **déduite de la fermeture des cotes** (rangées de pièces qui se referment exactement) > épaisseur mesurée sur le dessin à l'échelle calée > convention par défaut (35/25/10 cm). Toute épaisseur non cotée est signalée.
 
 **Nettoyage géométrique** : le skill redresse et nettoie la géométrie automatiquement (aligne les murs, force les angles à 90° par défaut) — sauf si l'esquisse porte une cotation d'angle explicite en degrés indiquant un angle volontairement différent de 90°, auquel cas cet angle est respecté tel quel.
+Affinage **proposé, à valider** (test « auditorium » : salle en éventail, anneau courbe — forcer 90° aurait détruit le projet) : les directions des murs sont redressées sur les **directions dominantes mesurées** sur le dessin, avec une tolérance de ±4° ; un écart inférieur est une imprécision de main (redressé à 0/90°), un écart franc et répété (ou symétrique) est conservé tel que mesuré, arrondi, et **signalé** pour confirmation. Les murs courbes sont restitués en **vrais arcs**. Une **symétrie** détectée est imposée seulement dans la tolérance (quelques centimètres) ; au-delà, chaque côté est reproduit tel que dessiné et l'écart est signalé.
 
-**Sortie** : un fichier DXF dans le sous-dossier `dxf/` du dossier du concours indiqué, nommé par l'utilisateur (ex. `plan-rdc.dxf`, `coupe-aa.dxf`, `facade-nord.dxf`). Le DXF utilise des calques correspondant aux catégories de trait ci-dessus (murs, menuiserie, aménagement, éléments cachés ; pour les façades, calques par plan de profondeur), en respectant les épaisseurs de mur et de trait données. Les nomenclatures d'espaces (nom, et surface si indiquée) sont reportées en tant qu'entités TEXTE dans le DXF.
+**Sortie** : un fichier DXF dans le sous-dossier `dxf/` du dossier du concours indiqué, nommé par l'utilisateur (ex. `plan-rdc.dxf`, `coupe-aa.dxf`, `facade-nord.dxf`). Le DXF utilise des calques correspondant aux catégories de trait ci-dessus (murs, menuiserie, aménagement, éléments cachés ; pour les façades, calques par plan de profondeur), en respectant les épaisseurs de mur et de trait données, plus des calques annexes : sièges, abords extérieurs, signalétique (flèches d'évacuation), axes de coupe, textes, cotes, et `ALERTE` (points à vérifier numérotés, à masquer pour le tirage). Unités du DXF : mètres. Les nomenclatures d'espaces (nom, et surface si indiquée) sont reportées en tant qu'entités TEXTE dans le DXF.
 
 ## Cas limites
 - Esquisse multi-niveaux (RDC/R+1/R+2...) où un niveau n'a pas de titre clair, ou où les niveaux se chevauchent visuellement au point de ne pas pouvoir les séparer → signaler plutôt que deviner à quel niveau appartient un élément.
@@ -61,6 +63,9 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 - Cote qui ne se recoupe pas avec les autres → vérifier d'abord si c'est une cote **en entraxe** (axe de mur à axe de mur) plutôt qu'une cote libre ; dans les deux cas, signaler (mélange de conventions, ou vraie incohérence à faire trancher par l'architecte).
 - Texte ou marque hors du bâtiment sans rapport avec le plan (filigrane, signature, logo) → non reproduit dans le DXF, mentionné dans le compte rendu.
 - Élément dessiné dont la nature est incertaine (trait de couleur inhabituelle, lignes extérieures, escalier sans sens de montée) → reproduit **tel que dessiné**, avec une note d'interprétation, plutôt qu'omis ou réinterprété.
+- Total écrit sur le dessin en désaccord avec les éléments dessinés (ex. « AFORO 505 » pour 389 fauteuils dessinés) → reproduire le dessin, jamais l'étiquette, et signaler l'écart.
+- Plan sans aucune cote ni échelle → échelle estimée sur éléments normalisés (voir Calage dimensionnel), signalée comme estimation avec son incertitude.
+- Élément attendu mais absent du dessin (ex. local sans porte dessinée) ou trop pâle pour être lu → non inventé, signalé.
 
 ## Contraintes non-fonctionnelles
 - Le DXF doit être ouvrable et exploitable directement dans AutoCAD, sans retouche de structure de fichier nécessaire avant ouverture.
@@ -71,11 +76,13 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 - Murs assemblés par **union géométrique** : jonctions en T et en L propres, sans traits parasites.
 - Textes multilignes en MTEXT ; **aucun chevauchement** de textes ou de cotes (vérifié sur le rendu) ; textes en arabe sur un **calque séparé** (`TEXTE_AR`), leur affichage de droite à gauche étant à vérifier dans AutoCAD.
 - Le DXF reprend les **cotes de l'esquisse** (calque `COTES`) et des cotes hors-tout ; les noms de pièces non portés sur l'esquisse mais déduits de l'usage sont marqués d'un astérisque.
+- Les éléments répétitifs (fauteuils, chaises, WC, lavabos, plantes...) sont des **blocs** nommés, comptables et modifiables en une fois dans AutoCAD ; un texte posé sur des éléments dessinés reçoit un masque de fond.
+- Le DXF passe l'audit ezdxf sans erreur, et il est **régénérable depuis l'image par un script** (pas de retouche manuelle non tracée).
 - Vit dans le repo `architecte-workflow-skills`, comme un nouveau skill à côté de `lecture-reglement-concours`.
 
 ## Définition de « terminé »
 - [ ] Le skill est livré dans `architecte-workflow-skills` (structure Claude Code skill standard).
 - [ ] Testé par l'utilisateur avec une vraie esquisse scannée qu'il fournira (plan, coupe, ou façade).
-- [ ] Le DXF produit respecte les calques et épaisseurs de trait convenus, s'ouvre correctement, et la géométrie est redressée/nettoyée (angles à 90° sauf cotation explicite contraire).
+- [ ] Le DXF produit respecte les calques et épaisseurs de trait convenus, s'ouvre correctement, et la géométrie est redressée/nettoyée (angles à 90° sauf cotation explicite contraire ; biais francs et courbes conservés si l'affinage proposé est validé).
 - [ ] Les ambiguïtés/illisibilités et écarts de cotation sont signalés plutôt que devinés silencieusement.
 - [ ] Le fichier est enregistré dans `dxf/` du dossier du concours indiqué, avec le nom donné par l'utilisateur.
