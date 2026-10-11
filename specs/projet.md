@@ -42,7 +42,11 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 - Fenêtres : deux traits rapprochés de 1 mm sur l'esquisse → représentés à 0,7 mm dans le DXF ; pour les fenêtres coulissantes, des flèches indiquent le sens d'ouverture ; allège/linteau notés selon la convention 1/1.2 (étages) ou 1.2/1 (RDC), sauf indication contraire sur l'esquisse.
 - Portes-fenêtres : notées « PF » sur l'esquisse, à reconnaître comme telles.
 
-**Calage dimensionnel** : déduit de l'échelle indiquée par l'utilisateur et du format papier (A3/A4/A5). Les cotes explicitement écrites sur l'esquisse priment sur ce calcul par échelle quand les deux sont présentes et divergent (voir cas limites pour la gestion d'un écart significatif).
+**Méthode de lecture** (leçon du test « plan majlis ») : l'esquisse est lue **zone par zone, zoomée avec une grille de coordonnées**, jamais d'un seul coup d'œil global. Les murs (hachurés/pochés) et les fenêtres (traits ou couleurs) sont d'abord **extraits automatiquement par analyse d'image** pour obtenir leurs positions ; la lecture visuelle sert à interpréter (portes, sens d'ouverture, usage des pièces) et à écarter les faux positifs (textes colorés, mobilier, filigranes). Un **inventaire** (nombre de pièces, portes, fenêtres relevés sur l'esquisse) est établi avant de générer quoi que ce soit.
+
+**Calage dimensionnel** : quand des cotes sont écrites sur l'esquisse, l'échelle est calée **par recoupement de plusieurs cotes** (et non une seule), puis la géométrie est **reconstruite à partir des cotes** (les pixels ne servent qu'à la topologie et au contrôle). Sinon, échelle indiquée par l'utilisateur + format papier (A3/A4/A5). Les cotes explicites priment sur le calcul par échelle quand les deux divergent (voir cas limites).
+
+**Épaisseur des murs** (règle proposée, à valider par l'utilisateur) : épaisseur cotée > épaisseur **déduite de la fermeture des cotes** (rangées de pièces qui se referment exactement) > épaisseur mesurée sur le dessin à l'échelle calée > convention par défaut (35/25/10 cm). Toute épaisseur non cotée est signalée.
 
 **Nettoyage géométrique** : le skill redresse et nettoie la géométrie automatiquement (aligne les murs, force les angles à 90° par défaut) — sauf si l'esquisse porte une cotation d'angle explicite en degrés indiquant un angle volontairement différent de 90°, auquel cas cet angle est respecté tel quel.
 
@@ -53,14 +57,20 @@ Deuxième skill de la série d'outillage du workflow de concours d'architecture 
 - Élément de l'esquisse ambigu ou illisible (catégorie de trait pas claire, cote illisible, symbole de porte/fenêtre pas clair) → signaler explicitement dans le résultat plutôt que deviner et produire un DXF silencieusement faux.
 - Cote écrite sur l'esquisse en désaccord significatif avec la valeur déduite de l'échelle/format papier → la cote explicite prime, mais l'écart est signalé pour que l'architecte le vérifie, plutôt que d'être résolu silencieusement.
 - Angle qui semble volontairement différent de 90° sur le dessin mais sans annotation en degrés → traité comme 90° par défaut (règle de redressement), avec un signalement que l'intention pourrait être différente, pour que l'architecte ajoute la cotation d'angle si besoin.
-- Épaisseur de mur non standard sans cotation explicite → utiliser les valeurs par défaut (10/35/25 cm) et signaler l'hypothèse faite.
+- Épaisseur de mur non cotée → appliquer la règle de priorité ci-dessus (Besoins exacts) et signaler l'hypothèse faite.
+- Cote qui ne se recoupe pas avec les autres → vérifier d'abord si c'est une cote **en entraxe** (axe de mur à axe de mur) plutôt qu'une cote libre ; dans les deux cas, signaler (mélange de conventions, ou vraie incohérence à faire trancher par l'architecte).
+- Texte ou marque hors du bâtiment sans rapport avec le plan (filigrane, signature, logo) → non reproduit dans le DXF, mentionné dans le compte rendu.
+- Élément dessiné dont la nature est incertaine (trait de couleur inhabituelle, lignes extérieures, escalier sans sens de montée) → reproduit **tel que dessiné**, avec une note d'interprétation, plutôt qu'omis ou réinterprété.
 
 ## Contraintes non-fonctionnelles
 - Le DXF doit être ouvrable et exploitable directement dans AutoCAD, sans retouche de structure de fichier nécessaire avant ouverture.
 - Les murs sont toujours représentés **pochés** (remplissage plein entre les deux lignes), quelle que soit leur épaisseur — une double ligne non remplie n'est pas assez lisible à l'échelle d'un plan complet.
 - Le skill part d'un **gabarit DXF réutilisable** (calques et style de cote pré-configurés avec la bonne échelle d'affichage) plutôt que de redéfinir ces conventions à chaque génération.
 - **Avant de livrer un DXF**, le skill vérifie que chaque catégorie attendue (murs extérieurs, murs intérieurs, portes, fenêtres, aménagement, cotes) contient bien au moins une entité générée, et signale explicitement toute catégorie vide plutôt que de livrer un résultat silencieusement incomplet.
-- **Avant de livrer un DXF**, le skill en génère un rendu visuel (image) et le compare visuellement à l'esquisse source, plutôt que de considérer la génération terminée dès que le fichier s'écrit sans erreur.
+- **Avant de livrer un DXF**, le skill **superpose le DXF sur l'esquisse source à la même échelle** et vérifie que murs, ouvertures et éléments tombent sur les traits d'origine — un rendu du DXF seul ne suffit pas (il peut paraître plausible tout en étant faux, cf. erreurs d'escalier/hall du test « majlis »). Il compare aussi l'**inventaire généré à l'inventaire relevé** (pièces, portes, fenêtres).
+- Murs assemblés par **union géométrique** : jonctions en T et en L propres, sans traits parasites.
+- Textes multilignes en MTEXT ; **aucun chevauchement** de textes ou de cotes (vérifié sur le rendu) ; textes en arabe sur un **calque séparé** (`TEXTE_AR`), leur affichage de droite à gauche étant à vérifier dans AutoCAD.
+- Le DXF reprend les **cotes de l'esquisse** (calque `COTES`) et des cotes hors-tout ; les noms de pièces non portés sur l'esquisse mais déduits de l'usage sont marqués d'un astérisque.
 - Vit dans le repo `architecte-workflow-skills`, comme un nouveau skill à côté de `lecture-reglement-concours`.
 
 ## Définition de « terminé »
