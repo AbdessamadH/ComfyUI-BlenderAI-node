@@ -54,6 +54,15 @@ Affinage **proposé, à valider** (test « auditorium » : salle en éventail, a
 
 **Sortie** : un fichier DXF dans le sous-dossier `dxf/` du dossier du concours indiqué, nommé par l'utilisateur (ex. `plan-rdc.dxf`, `coupe-aa.dxf`, `facade-nord.dxf`). Le DXF utilise des calques correspondant aux catégories de trait ci-dessus (murs, menuiserie, aménagement, éléments cachés ; pour les façades, calques par plan de profondeur), en respectant les épaisseurs de mur et de trait données, plus des calques annexes : sièges, abords extérieurs, signalétique (flèches d'évacuation), axes de coupe, textes, cotes, et `ALERTE` (points à vérifier numérotés, à masquer pour le tirage). Unités du DXF : mètres. Les nomenclatures d'espaces (nom, et surface si indiquée) sont reportées en tant qu'entités TEXTE dans le DXF.
 
+**Règles de qualité de dessin** (exigées par l'architecte après le test « auditorium » ; chacune est vérifiée automatiquement avant livraison et bloque la livraison si elle échoue) :
+- **Langue** : tout texte du DXF est en français ; les textes d'une esquisse dans une autre langue sont traduits (nomenclature d'usage française : SANITAIRES HOMMES/FEMMES, LOGE, RÉGIE, SORTIE DE SECOURS…).
+- **Murs** : les deux faces de chaque mur sont parfaitement parallèles (murs droits) ou concentriques (murs courbes) — chaque mur est reconstruit par son axe et une épaisseur constante, jamais par le contour irrégulier du tracé.
+- **Cloisons** : toutes les cloisons dessinées sont reproduites, y compris les cloisons fines des sanitaires (cabines) et des loges.
+- **Portes** : chaque porte est placée dans la baie exacte entre les deux tableaux du mur ; vantail et arc d'ouverture au bon tableau et du bon côté ; un vantail ne traverse jamais un mur ; portes doubles et va-et-vient dessinées selon leur symbole.
+- **Sanitaires et mobilier fixe** : chaque appareil (WC, lavabo, vasque) est adossé à la face du mur, perpendiculaire à ce mur (radial le long d'un mur courbe), centré dans sa cabine ; aucun appareil ne dépasse dans un mur.
+- **Escaliers** : marches parfaitement parallèles, à espacement parfaitement régulier, giron compris entre 0,25 et 0,27 m (nombre de marches recalculé sur la longueur de volée) ; l'écart avec le giron dessiné est signalé.
+- Les traits non reconnus sont redressés (droites, vrais arcs) ; un tracé irrégulier n'est jamais reproduit en zigzag.
+
 ## Cas limites
 - Esquisse multi-niveaux (RDC/R+1/R+2...) où un niveau n'a pas de titre clair, ou où les niveaux se chevauchent visuellement au point de ne pas pouvoir les séparer → signaler plutôt que deviner à quel niveau appartient un élément.
 - Élément de l'esquisse ambigu ou illisible (catégorie de trait pas claire, cote illisible, symbole de porte/fenêtre pas clair) → signaler explicitement dans le résultat plutôt que deviner et produire un DXF silencieusement faux.
@@ -85,4 +94,5 @@ Affinage **proposé, à valider** (test « auditorium » : salle en éventail, a
 - [ ] Testé par l'utilisateur avec une vraie esquisse scannée qu'il fournira (plan, coupe, ou façade).
 - [ ] Le DXF produit respecte les calques et épaisseurs de trait convenus, s'ouvre correctement, et la géométrie est redressée/nettoyée (angles à 90° sauf cotation explicite contraire ; biais francs et courbes conservés si l'affinage proposé est validé).
 - [ ] Les ambiguïtés/illisibilités et écarts de cotation sont signalés plutôt que devinés silencieusement.
+- [ ] Les contrôles automatiques des règles de qualité de dessin (langue, murs, portes, sanitaires, escaliers) passent tous.
 - [ ] Le fichier est enregistré dans `dxf/` du dossier du concours indiqué, avec le nom donné par l'utilisateur.
