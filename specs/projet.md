@@ -61,6 +61,7 @@ Affinage **proposé, à valider** (test « auditorium » : salle en éventail, a
 - **Portes** : chaque porte est placée dans la baie exacte entre les deux tableaux du mur ; vantail et arc d'ouverture au bon tableau et du bon côté ; un vantail ne traverse jamais un mur ; portes doubles et va-et-vient dessinées selon leur symbole.
 - **Sanitaires et mobilier fixe** : chaque appareil (WC, lavabo, vasque) est adossé à la face du mur, perpendiculaire à ce mur (radial le long d'un mur courbe), centré dans sa cabine ; aucun appareil ne dépasse dans un mur.
 - **Escaliers** : marches parfaitement parallèles, à espacement parfaitement régulier, giron compris entre 0,25 et 0,27 m (nombre de marches recalculé sur la longueur de volée) ; l'écart avec le giron dessiné est signalé.
+- **Circulation** : avant livraison, le skill vérifie que **chaque pièce est accessible** depuis l'extérieur en passant par des baies (calcul des espaces fermés par les murs, vitrages fixes et fenêtres) et que **chaque baie entre deux murs est pourvue d'une porte**, sauf les passages ouverts déclarés (espaces décloisonnés). Une pièce inaccessible ou sans porte bloque la livraison : la porte manquante est ajoutée sur le mur le plus plausible (côté circulation, sans heurter le mobilier ni un mur), et listée comme « porte ajoutée, non dessinée sur l'esquisse ».
 - Les traits non reconnus sont redressés (droites, vrais arcs) ; un tracé irrégulier n'est jamais reproduit en zigzag.
 
 ## Cas limites
@@ -94,5 +95,5 @@ Affinage **proposé, à valider** (test « auditorium » : salle en éventail, a
 - [ ] Testé par l'utilisateur avec une vraie esquisse scannée qu'il fournira (plan, coupe, ou façade).
 - [ ] Le DXF produit respecte les calques et épaisseurs de trait convenus, s'ouvre correctement, et la géométrie est redressée/nettoyée (angles à 90° sauf cotation explicite contraire ; biais francs et courbes conservés si l'affinage proposé est validé).
 - [ ] Les ambiguïtés/illisibilités et écarts de cotation sont signalés plutôt que devinés silencieusement.
-- [ ] Les contrôles automatiques des règles de qualité de dessin (langue, murs, portes, sanitaires, escaliers) passent tous.
+- [ ] Les contrôles automatiques des règles de qualité de dessin (langue, murs, portes, circulation, sanitaires, escaliers) passent tous.
 - [ ] Le fichier est enregistré dans `dxf/` du dossier du concours indiqué, avec le nom donné par l'utilisateur.
