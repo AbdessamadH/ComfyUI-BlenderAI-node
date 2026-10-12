@@ -88,6 +88,7 @@ Affinage **proposé, à valider** (test « auditorium » : salle en éventail, a
 - Le DXF reprend les **cotes de l'esquisse** (calque `COTES`) et des cotes hors-tout ; les noms de pièces non portés sur l'esquisse mais déduits de l'usage sont marqués d'un astérisque.
 - Les éléments répétitifs (fauteuils, chaises, WC, lavabos, plantes...) sont des **blocs** nommés, comptables et modifiables en une fois dans AutoCAD ; un texte posé sur des éléments dessinés reçoit un masque de fond.
 - Le DXF passe l'audit ezdxf sans erreur, et il est **régénérable depuis l'image par un script** (pas de retouche manuelle non tracée).
+- **Passerelle vers le skill de métré** : à chaque DXF livré, le skill produit aussi un **pré-métré** (JSON d'échange versionné + classeur Excel) : surface, périmètre et murs en élévation par pièce, portes et fenêtres avec largeurs, comptes des blocs, emprise et volume de murs, avec les hypothèses de hauteur affichées. Les pièces sans nom et les limites d'espaces décloisonnés (découpe supposée) sont signalées. Le format est à aligner sur celui du skill de métré de l'architecte.
 - Vit dans le repo `architecte-workflow-skills`, comme un nouveau skill à côté de `lecture-reglement-concours`.
 
 ## Définition de « terminé »
